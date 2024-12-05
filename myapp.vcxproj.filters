@@ -4,6 +4,7 @@
     <ClCompile Include="template\template.cpp">
       <Filter>template</Filter>
     </ClCompile>
+    <ClCompile Include="renderer.cpp" />
     <ClCompile Include="bvh.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -13,10 +14,12 @@
     <ClInclude Include="template\precomp.h">
       <Filter>template</Filter>
     </ClInclude>
-    <ClInclude Include="bvh.h" />
+    <ClInclude Include="renderer.h" />
     <ClInclude Include="cl\tools.cl">
       <Filter>template\cl</Filter>
     </ClInclude>
+    <ClInclude Include="bvh.h" />
+    <ClInclude Include="kdtree.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="template\LICENSE">
