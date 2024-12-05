@@ -2,8 +2,6 @@ TODOs:
 
 [] 10k triangle mesh
 
-[] instrumentation
+[] traversal steps
 
-	[] traversal steps
-
-	[] intersection tests
+[] intersection tests
