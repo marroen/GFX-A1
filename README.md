@@ -1,7 +1,6 @@
-This template is intended for students of Utrecht University.
+TODOs:
 
-**Please refer to "_ getting started.pdf" for instructions.**
-
-Code is fully public domain. Use as you please.
-
-Contact me at bikker.j@gmail.com.
+[] 10k triangle mesh
+[] instrumentation
+	[] traversal steps
+	[] intersection tests
