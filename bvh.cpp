@@ -566,7 +566,7 @@ void TLAS::BuildQuick()
 	}
 }
 
-int TLAS::Intersect( Ray& ray )
+void TLAS::Intersect( Ray& ray )
 {
 	// calculate reciprocal ray directions for faster AABB intersection
 	ray.rD = float3( 1 / ray.D.x, 1 / ray.D.y, 1 / ray.D.z );
@@ -610,7 +610,6 @@ int TLAS::Intersect( Ray& ray )
 			if (dist2 != 1e30f) stack[stackPtr++] = child2;
 		}
 	}
-	return intersections;
 }
 
 // EOF

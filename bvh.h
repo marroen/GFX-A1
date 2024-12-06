@@ -181,7 +181,7 @@ public:
 	TLAS() = default;
 	TLAS( BVHInstance* bvhList, int N );
 	void Build();
-	int Intersect( Ray& ray );
+	void Intersect( Ray& ray );
 private:
 	int FindBestMatch( int N, int A );
 public:
