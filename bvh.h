@@ -53,6 +53,29 @@ __declspec(align(64)) struct Ray
 	Intersection hit; // total ray size: 64 bytes
 };
 
+class RayCounter
+{
+public:
+	uint intersections;
+	uint traversals;
+	Ray& ray;
+
+	RayCounter(Ray& rayRef) : intersections(0), traversals(1), ray(rayRef) {}
+
+	void incrementIntersections() {
+		intersections++;
+	}
+
+	void incrementTraversals() {
+		traversals++;
+	}
+
+	void display() const {
+		std::cout << "Intersections: " << intersections << std::endl;
+		std::cout << "Traversals: " << traversals << std::endl;
+	}
+};
+
 // 32-byte BVH node struct
 struct BVHNode
 {
@@ -79,7 +102,7 @@ public:
 	BVH( class Mesh* mesh );
 	void Build();
 	void Refit();
-	void Intersect( Ray& ray, uint instanceIdx );
+	void Intersect( Ray& ray, uint instanceIdx, RayCounter& counter );
 private:
 	void Subdivide( uint nodeIdx, uint depth, uint& nodePtr, float3& centroidMin, float3& centroidMax );
 	void UpdateNodeBounds( uint nodeIdx, float3& centroidMin, float3& centroidMax );
@@ -117,7 +140,7 @@ public:
 	BVHInstance( BVH* blas, uint index ) : bvh( blas ), idx( index ) { SetTransform( mat4() ); }
 	void SetTransform( mat4& transform );
 	mat4& GetTransform() { return transform; }
-	void Intersect( Ray& ray );
+	void Intersect( Ray& ray, RayCounter& counter );
 private:
 	mat4 transform;
 	mat4 invTransform; // inverse transform
@@ -158,7 +181,7 @@ public:
 	TLAS() = default;
 	TLAS( BVHInstance* bvhList, int N );
 	void Build();
-	void Intersect( Ray& ray );
+	int Intersect( Ray& ray );
 private:
 	int FindBestMatch( int N, int A );
 public:

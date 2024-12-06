@@ -115,20 +115,26 @@ BVH::BVH( Mesh* triMesh )
 	Build();
 }
 
-void BVH::Intersect( Ray& ray, uint instanceIdx )
+void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 {
 	BVHNode* node = &bvhNode[0], * stack[64];
 	uint stackPtr = 0;
 	while (1)
 	{
 		if (node->isLeaf())
-		{
+		{	
 			for (uint i = 0; i < node->triCount; i++)
 			{
 				uint instPrim = (instanceIdx << 20) + triIdx[node->leftFirst + i];
 				IntersectTri( ray, mesh->tri[instPrim & 0xfffff /* 20 bits */], instPrim );
+				counter.incrementIntersections();
 			}
-			if (stackPtr == 0) break; else node = stack[--stackPtr];
+			if (stackPtr == 0)
+			{
+				counter.display();
+				break;
+			}
+			else node = stack[--stackPtr];
 			continue;
 		}
 		BVHNode* child1 = &bvhNode[node->leftFirst];
@@ -136,14 +142,23 @@ void BVH::Intersect( Ray& ray, uint instanceIdx )
 #ifdef USE_SSE
 		float dist1 = IntersectAABB_SSE( ray, child1->aabbMin4, child1->aabbMax4 );
 		float dist2 = IntersectAABB_SSE( ray, child2->aabbMin4, child2->aabbMax4 );
+		counter.incrementIntersections();
+		counter.incrementIntersections();
 #else
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
+		counter.incrementIntersections();
+		counter.incrementIntersections();
 #endif
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
 		if (dist1 == 1e30f)
 		{
-			if (stackPtr == 0) break; else node = stack[--stackPtr];
+			if (stackPtr == 0)
+			{
+				counter.display();
+				break;
+			}
+			else node = stack[--stackPtr];
 		}
 		else
 		{
@@ -383,7 +398,7 @@ void BVHInstance::SetTransform( mat4& T )
 			i & 2 ? bmax.y : bmin.y, i & 4 ? bmax.z : bmin.z ), transform ) );
 }
 
-void BVHInstance::Intersect( Ray& ray )
+void BVHInstance::Intersect( Ray& ray, RayCounter& counter )
 {
 	// backup ray and transform original
 	Ray backupRay = ray;
@@ -391,7 +406,7 @@ void BVHInstance::Intersect( Ray& ray )
 	ray.D = TransformVector( ray.D, invTransform );
 	ray.rD = float3( 1 / ray.D.x, 1 / ray.D.y, 1 / ray.D.z );
 	// trace ray through BVH
-	bvh->Intersect( ray, idx );
+	bvh->Intersect( ray, idx, counter );
 	// restore ray origin and direction
 	backupRay.hit = ray.hit;
 	ray = backupRay;
@@ -551,7 +566,7 @@ void TLAS::BuildQuick()
 	}
 }
 
-void TLAS::Intersect( Ray& ray )
+int TLAS::Intersect( Ray& ray )
 {
 	// calculate reciprocal ray directions for faster AABB intersection
 	ray.rD = float3( 1 / ray.D.x, 1 / ray.D.y, 1 / ray.D.z );
@@ -559,12 +574,18 @@ void TLAS::Intersect( Ray& ray )
 	TLASNode* node = &tlasNode[0], * stack[64];
 	uint stackPtr = 0;
 	// traversl loop; terminates when the stack is empty
+
+	uint intersections = 0;
+	// traversed to TLAS, start at count = 1
+	uint traversals = 1;
+	RayCounter counter(ray);
 	while (1)
 	{
 		if (node->isLeaf())
 		{
 			// current node is a leaf: intersect BLAS
-			blas[node->BLAS].Intersect( ray );
+			blas[node->BLAS].Intersect( ray, counter );
+			counter.incrementTraversals();
 			// pop a node from the stack; terminate if none left
 			if (stackPtr == 0) break; else node = stack[--stackPtr];
 			continue;
@@ -573,7 +594,9 @@ void TLAS::Intersect( Ray& ray )
 		TLASNode* child1 = &tlasNode[node->leftRight & 0xffff];
 		TLASNode* child2 = &tlasNode[node->leftRight >> 16];
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
+		counter.incrementIntersections();
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
+		counter.incrementIntersections();
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
 		if (dist1 == 1e30f)
 		{
@@ -587,6 +610,7 @@ void TLAS::Intersect( Ray& ray )
 			if (dist2 != 1e30f) stack[stackPtr++] = child2;
 		}
 	}
+	return intersections;
 }
 
 // EOF

@@ -1,5 +1,5 @@
 ## TODOs
 
-- [] 10k mesh
-- [] intersection tests
-- [] traversal steps
+- [x] 10k mesh
+- [x] intersection tests
+- [x] traversal steps

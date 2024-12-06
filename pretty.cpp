@@ -48,7 +48,8 @@ void PrettyApp::AnimateScene()
 
 float3 PrettyApp::Trace( Ray& ray )
 {
-	tlas.Intersect( ray );
+	int intersections = tlas.Intersect( ray );
+	std::cout << intersections << std::endl;
 	Intersection i = ray.hit;
 	if (i.t == 1e30f) return float3( 0 );
 	return float3( i.u, i.v, 1 - (i.u + i.v) );
@@ -78,6 +79,8 @@ void PrettyApp::Tick( float deltaTime )
 			accumulator[pixelAddress] = Trace( ray );
 		}
 	}
+
+	std::cout << sizeof(accumulator) / sizeof(accumulator[0]);
 	// convert the floating point accumulator into pixels
 	for( int i = 0; i < SCRWIDTH * SCRHEIGHT; i++ )
 	{
