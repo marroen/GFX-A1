@@ -25,7 +25,7 @@ void PrettyApp::Init()
 	p0 = TransformPosition( float3( -aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p1 = TransformPosition( float3( aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p2 = TransformPosition( float3( -aspectRatio, -1, 2 ), mat4::RotateX( 0.5f ) );
-	camPos = float3( 0, 3, -6.5f );
+	camPos = float3( 0, 3, -16.5f );
 	// create a floating point accumulator for the screen
 	accumulator = new float3[SCRWIDTH * SCRHEIGHT];
 }
