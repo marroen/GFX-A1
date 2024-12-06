@@ -6,7 +6,7 @@
 - [x] traversal steps
 
 06.12
-- [ ] multiple camera angles
+- [x] multiple camera angles
 - [ ] average
 - [ ] minimum
 - [ ] maximum
