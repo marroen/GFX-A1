@@ -127,11 +127,15 @@ void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 			{
 				uint instPrim = (instanceIdx << 20) + triIdx[node->leftFirst + i];
 				IntersectTri( ray, mesh->tri[instPrim & 0xfffff /* 20 bits */], instPrim );
+#ifdef TRACK
 				counter.incrementIntersections();
+#endif
 			}
 			if (stackPtr == 0)
 			{
+#ifdef TRACK
 				counter.display();
+#endif
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -142,20 +146,26 @@ void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 #ifdef USE_SSE
 		float dist1 = IntersectAABB_SSE( ray, child1->aabbMin4, child1->aabbMax4 );
 		float dist2 = IntersectAABB_SSE( ray, child2->aabbMin4, child2->aabbMax4 );
+#ifdef TRACK
 		counter.incrementIntersections();
 		counter.incrementIntersections();
+#endif
 #else
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
+#ifdef TRACK
 		counter.incrementIntersections();
 		counter.incrementIntersections();
+#endif
 #endif
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
 		if (dist1 == 1e30f)
 		{
 			if (stackPtr == 0)
 			{
+#ifdef TRACK
 				counter.display();
+#endif
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -585,23 +595,39 @@ void TLAS::Intersect( Ray& ray )
 		{
 			// current node is a leaf: intersect BLAS
 			blas[node->BLAS].Intersect( ray, counter );
+#ifdef TRACK
 			counter.incrementTraversals();
+#endif
 			// pop a node from the stack; terminate if none left
-			if (stackPtr == 0) break; else node = stack[--stackPtr];
+			if (stackPtr == 0) {
+#ifdef TRACK
+				counter.display();
+#endif
+				break;
+			}
+			else node = stack[--stackPtr];
 			continue;
 		}
 		// current node is an interior node: visit child nodes, ordered
 		TLASNode* child1 = &tlasNode[node->leftRight & 0xffff];
 		TLASNode* child2 = &tlasNode[node->leftRight >> 16];
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
-		counter.incrementIntersections();
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
+#ifdef TRACK
 		counter.incrementIntersections();
+		counter.incrementIntersections();
+#endif
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
 		if (dist1 == 1e30f)
 		{
 			// missed both child nodes; pop a node from the stack
-			if (stackPtr == 0) break; else node = stack[--stackPtr];
+			if (stackPtr == 0) {
+#ifdef TRACK
+				counter.display();
+#endif
+				break;
+			}
+			else node = stack[--stackPtr];
 		}
 		else
 		{

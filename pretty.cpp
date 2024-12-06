@@ -25,6 +25,7 @@ void PrettyApp::Init()
 	p0 = TransformPosition( float3( -aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p1 = TransformPosition( float3( aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p2 = TransformPosition( float3( -aspectRatio, -1, 2 ), mat4::RotateX( 0.5f ) );
+	camPos = float3( 0, 3, -6.5f );
 	// create a floating point accumulator for the screen
 	accumulator = new float3[SCRWIDTH * SCRHEIGHT];
 }
@@ -65,7 +66,7 @@ void PrettyApp::Tick( float deltaTime )
 		// render an 8x8 tile
 		int x = tile % (SCRWIDTH / 8), y = tile / (SCRWIDTH / 8);
 		Ray ray;
-		ray.O = float3( 0, 3, -6.5f );
+		ray.O = camPos;
 		for (int v = 0; v < 8; v++) for (int u = 0; u < 8; u++)
 		{
 			// setup a primary ray

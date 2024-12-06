@@ -3,6 +3,8 @@
 // enable the use of SSE in the AABB intersection function
 #define USE_SSE
 
+#define TRACK
+
 // bin count for binned BVH building
 #define BINS 8
 
