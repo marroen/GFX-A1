@@ -32,18 +32,55 @@
 // C++ practice but a simplification for template projects.
 using namespace std;
 
-// windows
+// windows.h: disable as much as possible to speed up compilation.
 #define NOMINMAX
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #endif
-#include <windows.h>
+#define NOGDICAPMASKS
+// #define NOVIRTUALKEYCODES
+#define NOWINMESSAGES
+#define NOWINSTYLES
+#define NOSYSMETRICS
+#define NOMENUS
+#define NOICONS
+#define NOKEYSTATES
+#define NOSYSCOMMANDS
+#define NORASTEROPS
+#define NOSHOWWINDOW
+#define OEMRESOURCE
+#define NOATOM
+#define NOCLIPBOARD
+#define NOCOLOR
+#define NOCTLMGR
+#define NODRAWTEXT
+#define NOKERNEL
+#define NONLS
+#define NOMEMMGR
+#define NOMETAFILE
+#define NOMINMAX
+#define NOMSG
+#define NOOPENFILE
+#define NOSCROLL
+#define NOSERVICE
+#define NOSOUND
+#define NOTEXTMETRIC
+#define NOWH
+#define NOWINOFFSETS
+#define NOCOMM
+#define NOKANJI
+#define NOHELP
+#define NOPROFILER
+#define NODEFERWINDOWPOS
+#define NOMCX
+#define NOIME
+#include "windows.h"
 
 // OpenCL headers
-#define CL_USE_DEPRECATED_OPENCL_2_0_APIS // safe; see https://stackoverflow.com/a/28500846
+#define CL_TARGET_OPENCL_VERSION 300
 #include "cl/cl.h"
-#include <cl/cl_gl_ext.h>
+#include <cl/cl_gl.h>
 
 // GLFW
 #define GLFW_USE_CHDIR 0
@@ -122,85 +159,96 @@ using namespace Tmpl8;
 #endif
 
 // vector type placeholders, carefully matching OpenCL's layout and alignment
-struct ALIGN( 8 ) int2 
-{ 
-	int2() = default; 
-	int2( const int a, const int b ) : x( a ), y( b ) {} 
+struct ALIGN( 8 ) int2
+{
+	int2() = default;
+	int2( const int a, const int b ) : x( a ), y( b ) {}
 	int2( const int a ) : x( a ), y( a ) {}
 	union { struct { int x, y; }; int cell[2]; };
-	int operator [] ( const int n ) const { return cell[n]; }
+	int& operator [] ( const int n ) { return cell[n]; }
 };
-struct ALIGN( 8 ) uint2 
-{ 
-	uint2() = default; 
-	uint2( const int a, const int b ) : x( a ), y( b ) {} 
+struct ALIGN( 8 ) uint2
+{
+	uint2() = default;
+	uint2( const int a, const int b ) : x( a ), y( b ) {}
 	uint2( const uint a ) : x( a ), y( a ) {}
 	union { struct { uint x, y; }; uint cell[2]; };
-	uint operator [] ( const int n ) const { return cell[n]; }
+	uint& operator [] ( const int n ) { return cell[n]; }
 };
-struct ALIGN( 8 ) float2 
-{ 
-	float2() = default; 
-	float2( const float a, const float b ) : x( a ), y( b ) {} 
-	float2( const float a ) : x(a ), y(a ) {}
-	union { struct { float x, y; }; float cell[2]; };
-	float operator [] ( const int n ) const { return cell[n]; }
-};
-struct ALIGN( 16 ) int3 
-{ 
-	int3() = default; 
-	int3( const int a, const int b, const int c ) : x( a ), y( b ), z( c ) {} 
-	int3( const int a ) : x( a ), y( a ), z( a ) {}
-	union { struct { int x, y, z; int dummy; }; int cell[4]; };
-	int operator [] ( const int n ) const { return cell[n]; }
-};
-struct ALIGN( 16 ) uint3 
-{ 
-	uint3() = default; 
-	uint3( const uint a, const uint b, const uint c ) : x( a ), y( b ), z( c ) {} 
-	uint3( const uint a ) : x( a ), y( a ), z( a ) {}
-	union { struct { uint x, y, z; uint dummy; }; uint cell[4]; };
-	uint operator [] ( const int n ) const { return cell[n]; }
-};
-struct ALIGN( 16 ) float3
+struct ALIGN( 8 ) float2
 {
-	float3() = default;
-	float3( const float a, const float b, const float c ) : x( a ), y( b ), z( c ) {}
-	float3( const float a ) : x( a ), y( a ), z( a ) {}
-	union { struct { float x, y, z; float dummy; }; float cell[4]; };
-	float operator [] ( const int n ) const { return cell[n]; }
+	float2() = default;
+	float2( const float a, const float b ) : x( a ), y( b ) {}
+	float2( const float a ) : x( a ), y( a ) {}
+	union { struct { float x, y; }; float cell[2]; };
+	float& operator [] ( const int n ) { return cell[n]; }
 };
+struct int3;
 struct ALIGN( 16 ) int4
 {
 	int4() = default;
 	int4( const int a, const int b, const int c, const int d ) : x( a ), y( b ), z( c ), w( d ) {}
 	int4( const int a ) : x( a ), y( a ), z( a ), w( a ) {}
+	int4( const int3 & a, const int d );
 	union { struct { int x, y, z, w; }; int cell[4]; };
-	int operator [] ( const int n ) const { return cell[n]; }
+	int& operator [] ( const int n ) { return cell[n]; }
 };
-struct ALIGN( 16 ) uint4 
-{ 
+struct ALIGN( 16 ) int3
+{
+	int3() = default;
+	int3( const int a, const int b, const int c ) : x( a ), y( b ), z( c ) {}
+	int3( const int a ) : x( a ), y( a ), z( a ) {}
+	int3( const int4 a ) : x( a.x ), y( a.y ), z( a.z ) {}
+	union { struct { int x, y, z; int dummy; }; int cell[4]; };
+	int& operator [] ( const int n ) { return cell[n]; }
+};
+struct uint3;
+struct ALIGN( 16 ) uint4
+{
 	uint4() = default;
 	uint4( const uint a, const uint b, const uint c, const uint d ) : x( a ), y( b ), z( c ), w( d ) {}
 	uint4( const uint a ) : x( a ), y( a ), z( a ), w( a ) {}
+	uint4( const uint3 & a, const uint d );
 	union { struct { uint x, y, z, w; }; uint cell[4]; };
-	uint operator [] ( const int n ) const { return cell[n]; }
+	uint& operator [] ( const int n ) { return cell[n]; }
 };
-struct ALIGN( 16 ) float4 
-{ 
+struct ALIGN( 16 ) uint3
+{
+	uint3() = default;
+	uint3( const uint a, const uint b, const uint c ) : x( a ), y( b ), z( c ) {}
+	uint3( const uint a ) : x( a ), y( a ), z( a ) {}
+	uint3( const uint4 a ) : x( a.x ), y( a.y ), z( a.z ) {}
+	union { struct { uint x, y, z; uint dummy; }; uint cell[4]; };
+	uint& operator [] ( const int n ) { return cell[n]; }
+};
+struct float3;
+struct ALIGN( 16 ) float4
+{
 	float4() = default;
-	float4( const float a, const float b, const float c, const float d ) : x( a ), y( b ), z( c ), w( d) {}
+	float4( const float a, const float b, const float c, const float d ) : x( a ), y( b ), z( c ), w( d ) {}
 	float4( const float a ) : x( a ), y( a ), z( a ), w( a ) {}
+	float4( const float3 & a, const float d );
+	float4( const float3 & a );
 	union { struct { float x, y, z, w; }; float cell[4]; };
-	float operator [] ( const int n ) const { return cell[n]; }
+	float& operator [] ( const int n ) { return cell[n]; }
 };
-struct ALIGN( 4 ) uchar4 
-{ 
+struct float3
+{
+	float3() = default;
+	float3( const float a, const float b, const float c ) : x( a ), y( b ), z( c ) {}
+	float3( const float a ) : x( a ), y( a ), z( a ) {}
+	float3( const float4 a ) : x( a.x ), y( a.y ), z( a.z ) {}
+	float3( const uint3 a ) : x( (float)a.x ), y( (float)a.y ), z( (float)a.z ) {}
+	union { struct { float x, y, z; }; float cell[3]; };
+	float& operator [] ( const int n ) { return cell[n]; }
+};
+struct ALIGN( 4 ) uchar4
+{
 	uchar4() = default;
 	uchar4( const uchar a, const uchar b, const uchar c, const uchar d ) : x( a ), y( b ), z( c ), w( d ) {}
 	uchar4( const uchar a ) : x( a ), y( a ), z( a ), w( a ) {}
 	union { struct { uchar x, y, z, w; }; uchar cell[4]; };
-	uchar operator [] ( const int n ) const { return cell[n]; }
+	uchar& operator [] ( const int n ) { return cell[n]; }
 };
 
 // fatal error reporting (with a pretty window)
@@ -226,6 +274,9 @@ public:
 	GLuint ID = 0;
 	uint width = 0, height = 0;
 };
+
+// template function access
+GLTexture* GetRenderTarget();
 
 // shader wrapper
 class mat4;
@@ -768,60 +819,6 @@ inline float4 smoothstep( float4 a, float4 b, float4 x )
 	return (y * y * (make_float4( 3.0f ) - (make_float4( 2.0f ) * y)));
 }
 
-// axis aligned bounding box class
-class aabb
-{
-public:
-	aabb() = default;
-	aabb( __m128 a, __m128 b ) { bmin4 = a, bmax4 = b; bmin[3] = bmax[3] = 0; }
-	aabb( float3 a, float3 b ) { bmin[0] = a.x, bmin[1] = a.y, bmin[2] = a.z, bmin[3] = 0, bmax[0] = b.x, bmax[1] = b.y, bmax[2] = b.z, bmax[3] = 0; }
-	__inline void Reset() { bmin4 = _mm_set_ps1( 1e34f ), bmax4 = _mm_set_ps1( -1e34f ); }
-	bool Contains( const __m128& p ) const
-	{
-		union { __m128 va4; float va[4]; };
-		union { __m128 vb4; float vb[4]; };
-		va4 = _mm_sub_ps( p, bmin4 ), vb4 = _mm_sub_ps( bmax4, p );
-		return ((va[0] >= 0) && (va[1] >= 0) && (va[2] >= 0) &&
-			(vb[0] >= 0) && (vb[1] >= 0) && (vb[2] >= 0));
-	}
-	__inline void Grow( const aabb& bb ) { bmin4 = _mm_min_ps( bmin4, bb.bmin4 ); bmax4 = _mm_max_ps( bmax4, bb.bmax4 ); }
-	__inline void Grow( const __m128& p ) { bmin4 = _mm_min_ps( bmin4, p ); bmax4 = _mm_max_ps( bmax4, p ); }
-	__inline void Grow( const __m128 min4, const __m128 max4 ) { bmin4 = _mm_min_ps( bmin4, min4 ); bmax4 = _mm_max_ps( bmax4, max4 ); }
-	__inline void Grow( const float3& p ) { __m128 p4 = _mm_setr_ps( p.x, p.y, p.z, 0 ); Grow( p4 ); }
-	aabb Union( const aabb& bb ) const { aabb r; r.bmin4 = _mm_min_ps( bmin4, bb.bmin4 ), r.bmax4 = _mm_max_ps( bmax4, bb.bmax4 ); return r; }
-	static aabb Union( const aabb& a, const aabb& b ) { aabb r; r.bmin4 = _mm_min_ps( a.bmin4, b.bmin4 ), r.bmax4 = _mm_max_ps( a.bmax4, b.bmax4 ); return r; }
-	aabb Intersection( const aabb& bb ) const { aabb r; r.bmin4 = _mm_max_ps( bmin4, bb.bmin4 ), r.bmax4 = _mm_min_ps( bmax4, bb.bmax4 ); return r; }
-	__inline float Extend( const int axis ) const { return bmax[axis] - bmin[axis]; }
-	__inline float Minimum( const int axis ) const { return bmin[axis]; }
-	__inline float Maximum( const int axis ) const { return bmax[axis]; }
-	float Area() const
-	{
-		union { __m128 e4; float e[4]; };
-		e4 = _mm_sub_ps( bmax4, bmin4 );
-		return max( 0.0f, e[0] * e[1] + e[0] * e[2] + e[1] * e[2] );
-	}
-	int LongestAxis() const
-	{
-		int a = 0;
-		if (Extend( 1 ) > Extend( 0 )) a = 1;
-		if (Extend( 2 ) > Extend( a )) a = 2;
-		return a;
-	}
-	// data members
-	union
-	{
-		struct
-		{
-			union { __m128 bmin4; float bmin[4]; struct { float3 bmin3; }; };
-			union { __m128 bmax4; float bmax[4]; struct { float3 bmax3; }; };
-		};
-		__m128 bounds[2] = { _mm_set_ps( 1e34f, 1e34f, 1e34f, 0 ), _mm_set_ps( -1e34f, -1e34f, -1e34f, 0 ) };
-	};
-	__inline void SetBounds( const __m128 min4, const __m128 max4 ) { bmin4 = min4; bmax4 = max4; }
-	__inline __m128 Center() const { return _mm_mul_ps( _mm_add_ps( bmin4, bmax4 ), _mm_set_ps1( 0.5f ) ); }
-	__inline float Center( uint axis ) const { return (bmin[axis] + bmax[axis]) * 0.5f; }
-};
-
 // matrix class
 class mat4
 {
@@ -1149,7 +1146,7 @@ public:
 	enum { DEFAULT = 0, TEXTURE = 8, TARGET = 16, READONLY = 1, WRITEONLY = 2 };
 	// constructor / destructor
 	Buffer() : hostBuffer( 0 ) {}
-	Buffer( unsigned int N, unsigned int t = DEFAULT, void* ptr = 0 );
+	Buffer( unsigned int N, void* ptr = 0, unsigned int t = DEFAULT );
 	~Buffer();
 	cl_mem* GetDevicePtr() { return &deviceBuffer; }
 	unsigned int* GetHostPtr() { return hostBuffer; }
@@ -1161,8 +1158,8 @@ public:
 	// data members
 	unsigned int* hostBuffer;
 	cl_mem deviceBuffer = 0;
-	unsigned int type, size, textureID;
-	bool ownData;
+	unsigned int type, size /* in bytes */, textureID;
+	bool ownData, aligned;
 };
 
 // OpenCL kernel
@@ -1181,13 +1178,123 @@ public:
 	static cl_command_queue& GetQueue2() { return queue2; }
 	static cl_context& GetContext() { return context; }
 	static cl_device_id& GetDevice() { return device; }
-	// methods
+	// run methods
+#if 1
 	void Run( cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0 );
 	void Run( cl_mem* buffers, const int count = 1, cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0, cl_event* acq = 0, cl_event* rel = 0 );
 	void Run( Buffer* buffer, const int2 localSize = make_int2( 32, 2 ), cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0, cl_event* acq = 0, cl_event* rel = 0 );
 	void Run( Buffer* buffer, const int count = 1, cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0, cl_event* acq = 0, cl_event* rel = 0 );
+#endif
 	void Run( const size_t count, const size_t localSize = 0, cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0 );
-	void Run2D( const int2 count, const int2 lsize, cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0 );
+	void Run2D( const int2 count, const int2 lsize = 0, cl_event* eventToWaitFor = 0, cl_event* eventToSet = 0 );
+	// argument passing with template trickery
+#define T_ typename
+	template<T_ A> void SetArguments( A a ) { InitArgs(); SetArgument( 0, a ); }
+	template<T_ A, T_ B> void SetArguments( A a, B b ) { InitArgs(); S( 0, a ); S( 1, b ); }
+	template<T_ A, T_ B, T_ C> void SetArguments( A a, B b, C c ) { InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); }
+	template<T_ A, T_ B, T_ C, T_ D> void SetArguments( A a, B b, C c, D d ) { InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); }
+	template<T_ A, T_ B, T_ C, T_ D, T_ E> void SetArguments( A a, B b, C c, D d, E e ) { InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); }
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F> void SetArguments( A a, B b, C c, D d, E e, F f )
+	{
+		InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G> void SetArguments( A a, B b, C c, D d, E e, F f, G g )
+	{
+		InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H> void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h )
+	{
+		InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I> void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i )
+	{
+		InitArgs(); S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h ); S( 8, i );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e );
+		S( 5, f ); S( 6, g ); S( 7, h ); S( 8, i ); S( 9, j );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f );
+		S( 6, g ); S( 7, h ); S( 8, i ); S( 9, j ); S( 10, k );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f );
+		S( 6, g ); S( 7, h ); S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g );
+		S( 7, h ); S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g );
+		S( 7, h ); S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O, T_ P>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o, P p )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o ), S( 15, p );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O, T_ P, T_ Q>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o, P p, Q q )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o ), S( 15, p );
+		S( 16, q );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O, T_ P, T_ Q, T_ R>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o, P p, Q q, R r )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o ), S( 15, p );
+		S( 16, q ), S( 17, r );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O, T_ P, T_ Q, T_ R, T_ T>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o, P p, Q q, R r, T t )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o ), S( 15, p );
+		S( 16, q ), S( 17, r ), S( 18, t );
+	}
+	template<T_ A, T_ B, T_ C, T_ D, T_ E, T_ F, T_ G, T_ H, T_ I, T_ J, T_ K, T_ L, T_ M, T_ N, T_ O, T_ P, T_ Q, T_ R, T_ T, T_ U>
+	void SetArguments( A a, B b, C c, D d, E e, F f, G g, H h, I i, J j, K k, L l, M m, N n, O o, P p, Q q, R r, T t, U u )
+	{
+		InitArgs();
+		S( 0, a ); S( 1, b ); S( 2, c ); S( 3, d ); S( 4, e ); S( 5, f ); S( 6, g ); S( 7, h );
+		S( 8, i ); S( 9, j ); S( 10, k ); S( 11, l ); S( 12, m ), S( 13, n ); S( 14, o ), S( 15, p );
+		S( 16, q ), S( 17, r ), S( 18, t ), S( 19, u );
+	}
+	template<T_ T> void S( uint i, T t ) { SetArgument( i, t ); }
+	void InitArgs() { acqBuffer = 0; /* nothing to acquire until told otherwise */ }
+#undef T_
+private:
 	void SetArgument( int idx, cl_mem* buffer );
 	void SetArgument( int idx, Buffer* buffer );
 	void SetArgument( int idx, Buffer& buffer );
@@ -1196,30 +1303,17 @@ public:
 	void SetArgument( int idx, float2 );
 	void SetArgument( int idx, float3 );
 	void SetArgument( int idx, float4 );
-	void SetFirstArgument( cl_mem* buffer ) { argIdx = 0; SetArgument( 0, buffer ); }
-	void SetFirstArgument( Buffer* buffer ) { argIdx = 0; SetArgument( 0, buffer ); }
-	void SetFirstArgument( float v ) { argIdx = 0; SetArgument( 0, v ); }
-	void SetFirstArgument( int v ) { argIdx = 0; SetArgument( 0, v ); }
-	void SetFirstArgument( float2 v ) { argIdx = 0; SetArgument( 0, v ); }
-	void SetFirstArgument( float3 v ) { argIdx = 0; SetArgument( 0, v ); }
-	void SetFirstArgument( float4 v ) { argIdx = 0; SetArgument( 0, v ); }
-	void SetNextArgument( cl_mem* buffer ) { SetArgument( ++argIdx, buffer ); }
-	void SetNextArgument( Buffer* buffer ) { SetArgument( ++argIdx, buffer ); }
-	void SetNextArgument( float v ) { SetArgument( ++argIdx, v ); }
-	void SetNextArgument( int v ) { SetArgument( ++argIdx, v ); }
-	void SetNextArgument( float2 v ) { SetArgument( ++argIdx, v ); }
-	void SetNextArgument( float3 v ) { SetArgument( ++argIdx, v ); }
-	void SetNextArgument( float4 v ) { SetArgument( ++argIdx, v ); }
+	// other methods
+public:
 	static bool InitCL();
 	static void CheckCLStarted();
 	static void KillCL();
 private:
 	// data members
+	Buffer* acqBuffer = 0;
 	cl_kernel kernel;
 	cl_mem vbo_cl;
 	cl_program program;
-	bool arg0set = false;
-	int argIdx = 0;
 	inline static cl_device_id device;
 	inline static cl_context context; // simplifies some things, but limits us to one device
 	inline static cl_command_queue queue, queue2;
