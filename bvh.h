@@ -3,7 +3,7 @@
 // enable the use of SSE in the AABB intersection function
 #define USE_SSE
 
-//#define TRACK
+#define TRACK
 
 // bin count for binned BVH building
 #define BINS 8
@@ -55,17 +55,23 @@ __declspec(align(64)) struct Ray
 	Intersection hit; // total ray size: 64 bytes
 };
 
+// ray counter, tracking instrumentation
 class RayCounter
 {
 public:
-	uint intersections;
+	uint triangleTests;
+	uint boxTests;
 	uint traversals;
 	Ray& ray;
 
-	RayCounter(Ray& rayRef) : intersections(0), traversals(1), ray(rayRef) {}
+	RayCounter(Ray& rayRef) : triangleTests(0), boxTests(0), traversals(1), ray(rayRef) {}
 
-	void incrementIntersections() {
-		intersections++;
+	void incrementTriangleTests() {
+		triangleTests++;
+	}
+
+	void incrementBoxTests() {
+		boxTests++;
 	}
 
 	void incrementTraversals() {
@@ -73,7 +79,8 @@ public:
 	}
 
 	void display() const {
-		std::cout << "Intersections: " << intersections << std::endl;
+		std::cout << "Triangle Tests: " << triangleTests << std::endl;
+		std::cout << "Box Tests: " << boxTests << std::endl;
 		std::cout << "Traversals: " << traversals << std::endl;
 	}
 };
@@ -104,7 +111,7 @@ public:
 	BVH( class Mesh* mesh );
 	void Build();
 	void Refit();
-	void Intersect( Ray& ray, uint instanceIdx, RayCounter& counter );
+	void Intersect( Ray& ray, uint instanceIdx, RayCounter* counter );
 private:
 	void Subdivide( uint nodeIdx, uint depth, uint& nodePtr, float3& centroidMin, float3& centroidMax );
 	void UpdateNodeBounds( uint nodeIdx, float3& centroidMin, float3& centroidMax );
@@ -142,7 +149,7 @@ public:
 	BVHInstance( BVH* blas, uint index ) : bvh( blas ), idx( index ) { SetTransform( mat4() ); }
 	void SetTransform( mat4& transform );
 	mat4& GetTransform() { return transform; }
-	void Intersect( Ray& ray, RayCounter& counter );
+	void Intersect( Ray& ray, RayCounter* counter );
 private:
 	mat4 transform;
 	mat4 invTransform; // inverse transform
@@ -183,7 +190,7 @@ public:
 	TLAS() = default;
 	TLAS( BVHInstance* bvhList, int N );
 	void Build();
-	void Intersect( Ray& ray );
+	void Intersect( Ray& ray, RayCounter* counter );
 private:
 	int FindBestMatch( int N, int A );
 public:

@@ -8,6 +8,6 @@
 06.12
 - [x] multiple camera angles
 - [x] start report
-- [ ] average
-- [ ] minimum
-- [ ] maximum
+- [x] average
+- [x] minimum
+- [x] maximum

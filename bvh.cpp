@@ -115,7 +115,7 @@ BVH::BVH( Mesh* triMesh )
 	Build();
 }
 
-void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
+void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter* counter )
 {
 	BVHNode* node = &bvhNode[0], * stack[64];
 	uint stackPtr = 0;
@@ -128,14 +128,11 @@ void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 				uint instPrim = (instanceIdx << 20) + triIdx[node->leftFirst + i];
 				IntersectTri( ray, mesh->tri[instPrim & 0xfffff /* 20 bits */], instPrim );
 #ifdef TRACK
-				counter.incrementIntersections();
+				counter->incrementTriangleTests();
 #endif
 			}
 			if (stackPtr == 0)
 			{
-#ifdef TRACK
-				counter.display();
-#endif
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -147,15 +144,15 @@ void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 		float dist1 = IntersectAABB_SSE( ray, child1->aabbMin4, child1->aabbMax4 );
 		float dist2 = IntersectAABB_SSE( ray, child2->aabbMin4, child2->aabbMax4 );
 #ifdef TRACK
-		counter.incrementIntersections();
-		counter.incrementIntersections();
+		counter->incrementBoxTests();
+		counter->incrementBoxTests();
 #endif
 #else
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
 #ifdef TRACK
-		counter.incrementIntersections();
-		counter.incrementIntersections();
+		counter->incrementBoxTests();
+		counter->incrementBoxTests();
 #endif
 #endif
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
@@ -163,9 +160,6 @@ void BVH::Intersect( Ray& ray, uint instanceIdx, RayCounter& counter )
 		{
 			if (stackPtr == 0)
 			{
-#ifdef TRACK
-				counter.display();
-#endif
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -408,7 +402,7 @@ void BVHInstance::SetTransform( mat4& T )
 			i & 2 ? bmax.y : bmin.y, i & 4 ? bmax.z : bmin.z ), transform ) );
 }
 
-void BVHInstance::Intersect( Ray& ray, RayCounter& counter )
+void BVHInstance::Intersect( Ray& ray, RayCounter* counter )
 {
 	// backup ray and transform original
 	Ray backupRay = ray;
@@ -426,6 +420,7 @@ void BVHInstance::Intersect( Ray& ray, RayCounter& counter )
 
 TLAS::TLAS( BVHInstance* bvhList, int N )
 {
+
 	// copy a pointer to the array of bottom level accstruc instances
 	blas = bvhList;
 	blasCount = N;
@@ -576,7 +571,7 @@ void TLAS::BuildQuick()
 	}
 }
 
-void TLAS::Intersect( Ray& ray )
+void TLAS::Intersect( Ray& ray, RayCounter* counter )
 {
 	// calculate reciprocal ray directions for faster AABB intersection
 	ray.rD = float3( 1 / ray.D.x, 1 / ray.D.y, 1 / ray.D.z );
@@ -584,11 +579,6 @@ void TLAS::Intersect( Ray& ray )
 	TLASNode* node = &tlasNode[0], * stack[64];
 	uint stackPtr = 0;
 	// traversl loop; terminates when the stack is empty
-
-	uint intersections = 0;
-	// traversed to TLAS, start at count = 1
-	uint traversals = 1;
-	RayCounter counter(ray);
 	while (1)
 	{
 		if (node->isLeaf())
@@ -596,13 +586,10 @@ void TLAS::Intersect( Ray& ray )
 			// current node is a leaf: intersect BLAS
 			blas[node->BLAS].Intersect( ray, counter );
 #ifdef TRACK
-			counter.incrementTraversals();
+			counter->incrementTraversals();
 #endif
 			// pop a node from the stack; terminate if none left
 			if (stackPtr == 0) {
-#ifdef TRACK
-				counter.display();
-#endif
 				break;
 			}
 			else node = stack[--stackPtr];
@@ -614,17 +601,14 @@ void TLAS::Intersect( Ray& ray )
 		float dist1 = IntersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = IntersectAABB( ray, child2->aabbMin, child2->aabbMax );
 #ifdef TRACK
-		counter.incrementIntersections();
-		counter.incrementIntersections();
+		counter->incrementBoxTests();
+		counter->incrementBoxTests();
 #endif
 		if (dist1 > dist2) { swap( dist1, dist2 ); swap( child1, child2 ); }
 		if (dist1 == 1e30f)
 		{
 			// missed both child nodes; pop a node from the stack
 			if (stackPtr == 0) {
-#ifdef TRACK
-				counter.display();
-#endif
 				break;
 			}
 			else node = stack[--stackPtr];

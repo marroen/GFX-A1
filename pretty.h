@@ -10,7 +10,7 @@ public:
 	// game flow methods
 	void Init();
 	void AnimateScene();
-	float3 Trace( Ray& ray );
+	float3 Trace( Ray& ray, RayCounter* counter );
 	void Tick( float deltaTime );
 	void Shutdown() { /* implement if you want to do something on exit */ }
 	// input handling
@@ -27,6 +27,9 @@ public:
 	float3 p0, p1, p2; // virtual screen plane corners
 	float3 camPos;
 	float3* accumulator;
+	RayCounter* counters[524288] = { nullptr };
+	uint counterIdx = 0;
+	Timer timer;
 };
 
 } // namespace Tmpl8
