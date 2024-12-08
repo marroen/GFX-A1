@@ -73,6 +73,21 @@ Mesh::Mesh( const uint primCount )
 
 Mesh::Mesh( const char* objFile, const char* texFile, const float scale )
 {
+	/*
+	// Open the OBJ file
+	FILE* file = fopen(objFile, "r");
+	if (!file) return; // File doesn't exist
+
+	// First pass: Count faces
+	int faceCount = 0;
+	while (!feof(file))
+	{
+		char line[512] = { 0 };
+		fgets(line, 511, file);
+		if (line[0] == 'f') faceCount++;
+	}
+	rewind(file); // Reset file pointer to the beginning */
+
 	// bare-bones obj file loader; only supports very basic meshes
 	tri = new Tri[25000];
 	triEx = new TriEx[25000];

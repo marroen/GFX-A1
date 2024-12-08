@@ -1,5 +1,8 @@
 #pragma once
 
+#define NUM_MESHES 4
+#define SHOULD_MOVE true
+
 namespace Tmpl8
 {
 

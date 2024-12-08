@@ -20,17 +20,23 @@ void PrettyApp::Init()
 	timer.reset();
 	bool expired = false;
 
-	Mesh* mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
-	for (int i = 0; i < 16; i++)
+	float3 camPos1 = float3(0, 3, -6.0f);
+	float3 camPos2 = float3(0, 100, -150.0f);
+	float3 camPos3 = float3(0, 15, -30.0f);
+
+	camPos = camPos3;
+
+	//Mesh* mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
+	//Mesh* mesh = new Mesh( "assets/dragon.obj", "assets/bricks.png" );
+	Mesh* mesh = new Mesh("assets/avant-garde.obj", "assets/bricks.png");
+	for (int i = 0; i < NUM_MESHES; i++)
 		bvhInstance[i] = BVHInstance( mesh->bvh, i );
-	//bvhInstance[0] = BVHInstance( mesh->bvh, 0 );
-	tlas = TLAS( bvhInstance, 16 );
+	tlas = TLAS( bvhInstance, NUM_MESHES);
 	// setup screen plane in world space
 	float aspectRatio = (float)SCRWIDTH / SCRHEIGHT;
 	p0 = TransformPosition( float3( -aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p1 = TransformPosition( float3( aspectRatio, 1, 2 ), mat4::RotateX( 0.5f ) );
 	p2 = TransformPosition( float3( -aspectRatio, -1, 2 ), mat4::RotateX( 0.5f ) );
-	camPos = float3( 0, 3, -6.5f );
 	// create a floating point accumulator for the screen
 	accumulator = new float3[SCRWIDTH * SCRHEIGHT];
 }
@@ -38,14 +44,20 @@ void PrettyApp::Init()
 void PrettyApp::AnimateScene()
 {
 	// animate the scene
-	static float a[16] = {0}, h[16] = {5, 4, 3, 2, 1, 5, 4, 3}, s[16] = {0};
-	for (int i = 0, x = 0; x < 4; x++) for (int y = 0; y < 4; y++, i++)
+	// h[NUM_MESHES] must have length NUM_MESHES / 2
+	// h[NUM_MESHES] = {5, 4, 3, 2, 1, 5, 4, 3}
+	// h[NUM_MESHES] = {5, 4
+	static float a[16] = {0}, h[16] = { 5, 4, 3, 2, 1, 5, 4, 3 }, s[16] = {0};
+	for (int i = 0, x = 0; x < NUM_MESHES / 2; x++) for (int y = 0; y < NUM_MESHES / 2; y++, i++)
 	{
 		mat4 R, T = mat4::Translate( (x - 1.5f) * 2.5f, 0, (y - 1.5f) * 2.5f );
-		/*if ((x + y) & 1) R = mat4::RotateY(a[i]);
-		else R = mat4::Translate( 0, h[i / 2], 0 );
-		if ((a[i] += (((i * 13) & 7) + 2) * 0.005f) > 2 * PI) a[i] -= 2 * PI;
-		if ((s[i] -= 0.01f, h[i] += s[i]) < 0) s[i] = 0.2f;*/
+		if (SHOULD_MOVE)
+		{
+			if ((x + y) & 1) R = mat4::RotateY(a[i]);
+			else R = mat4::Translate(0, h[i / 2], 0);
+			if ((a[i] += (((i * 13) & 7) + 2) * 0.005f) > 2 * PI) a[i] -= 2 * PI;
+			if ((s[i] -= 0.01f, h[i] += s[i]) < 0) s[i] = 0.2f;
+		}
 		bvhInstance[i].SetTransform( T * R * mat4::Scale( 1.5f ) );
 	}
 	// update the TLAS

@@ -57,7 +57,8 @@ void WhittedApp::AnimateScene()
 
 float3 WhittedApp::Trace( Ray& ray, int rayDepth )
 {
-	tlas.Intersect( ray );
+	RayCounter* counter = new RayCounter(ray);
+	tlas.Intersect( ray, counter );
 	Intersection i = ray.hit;
 	if (i.t == 1e30f)
 	{

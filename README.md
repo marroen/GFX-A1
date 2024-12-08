@@ -13,6 +13,6 @@
 - [x] maximum
 
 08.12
-- [ ] create two more scenes
-- [ ] identify all ray types in codebase
+- [x] create two more scenes
+- [x] identify all ray types in codebase
 - [ ] track all ray types
