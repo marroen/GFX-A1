@@ -16,3 +16,7 @@
 - [x] create two more scenes
 - [x] identify all ray types in codebase
 - [x] track all ray types
+
+09.12
+- [ ] do tests per scene
+- [ ] write report
