@@ -23,12 +23,13 @@ void PrettyApp::Init()
 	float3 camPos1 = float3(0, 3, -6.0f);
 	float3 camPos2 = float3(0, 100, -150.0f);
 	float3 camPos3 = float3(0, 15, -30.0f);
+	float3 camPos4 = float3(0, -2, -8.5f);
 
-	camPos = camPos3;
+	camPos = camPos1;
 
-	//Mesh* mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
+	Mesh* mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
 	//Mesh* mesh = new Mesh( "assets/dragon.obj", "assets/bricks.png" );
-	Mesh* mesh = new Mesh("assets/avant-garde.obj", "assets/bricks.png");
+	//Mesh* mesh = new Mesh("assets/avant-garde.obj", "assets/bricks.png");
 	for (int i = 0; i < NUM_MESHES; i++)
 		bvhInstance[i] = BVHInstance( mesh->bvh, i );
 	tlas = TLAS( bvhInstance, NUM_MESHES);
@@ -44,11 +45,8 @@ void PrettyApp::Init()
 void PrettyApp::AnimateScene()
 {
 	// animate the scene
-	// h[NUM_MESHES] must have length NUM_MESHES / 2
-	// h[NUM_MESHES] = {5, 4, 3, 2, 1, 5, 4, 3}
-	// h[NUM_MESHES] = {5, 4
 	static float a[16] = {0}, h[16] = { 5, 4, 3, 2, 1, 5, 4, 3 }, s[16] = {0};
-	for (int i = 0, x = 0; x < NUM_MESHES / 2; x++) for (int y = 0; y < NUM_MESHES / 2; y++, i++)
+	for (int i = 0, x = 0; x < std::sqrt(NUM_MESHES); x++) for (int y = 0; y < std::sqrt(NUM_MESHES); y++, i++)
 	{
 		mat4 R, T = mat4::Translate( (x - 1.5f) * 2.5f, 0, (y - 1.5f) * 2.5f );
 		if (SHOULD_MOVE)

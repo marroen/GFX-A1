@@ -61,10 +61,11 @@ class RayCounter
 public:
 	uint triangleTests;
 	uint boxTests;
+	uint bounces;
 	uint traversals;
 	Ray& ray;
 
-	RayCounter(Ray& rayRef) : triangleTests(0), boxTests(0), traversals(1), ray(rayRef) {}
+	RayCounter(Ray& rayRef) : triangleTests(0), boxTests(0), bounces(0), traversals(1), ray(rayRef) {}
 
 	void incrementTriangleTests() {
 		triangleTests++;
@@ -74,6 +75,10 @@ public:
 		boxTests++;
 	}
 
+	void incrementBounces() {
+		bounces++;
+	}
+
 	void incrementTraversals() {
 		traversals++;
 	}
@@ -81,6 +86,7 @@ public:
 	void display() const {
 		std::cout << "Triangle Tests: " << triangleTests << std::endl;
 		std::cout << "Box Tests: " << boxTests << std::endl;
+		std::cout << "Bounces: " << bounces << std::endl;
 		std::cout << "Traversals: " << traversals << std::endl;
 	}
 };

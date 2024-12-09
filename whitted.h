@@ -1,5 +1,9 @@
 #pragma once
 
+#define NUM_MESHES 4
+#define SHOULD_MOVE true
+#define HALF_MIRRORED false
+
 namespace Tmpl8
 {
 
@@ -10,7 +14,7 @@ public:
 	// game flow methods
 	void Init();
 	void AnimateScene();
-	float3 Trace( Ray& ray, int rayDepth = 0 );
+	float3 Trace( Ray& ray, RayCounter* counter, int rayDepth = 0 );
 	void Tick( float deltaTime );
 	void Shutdown() { /* implement if you want to do something on exit */ }
 	// input handling
@@ -26,7 +30,11 @@ public:
 	BVHInstance bvhInstance[256];
 	TLAS tlas;
 	float3 p0, p1, p2; // virtual screen plane corners
+	float3 camPos;
 	float3* accumulator;
+	RayCounter* counters[524288] = { nullptr };
+	uint counterIdx = 0;
+	Timer timer;
 	float* skyPixels;
 	int skyWidth, skyHeight, skyBpp;
 };

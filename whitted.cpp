@@ -26,10 +26,23 @@ inline float3 RGB8toRGB32F( uint c )
 
 void WhittedApp::Init()
 {
-	mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
-	for (int i = 0; i < 16; i++)
+	Timer timer;
+	timer.reset();
+
+	float3 camPos1 = float3(0, -2, -8.5f);
+	float3 camPos2 = float3(0, 100, -150.0f);
+	float3 camPos3 = float3(0, 15, -30.0f);
+
+	camPos = camPos1;
+
+	//mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
+	//mesh = new Mesh( "assets/dragon.obj", "assets/bricks.png" );
+	//mesh = new Mesh("assets/avant-garde.obj", "assets/bricks.png");
+	//mesh = new Mesh("assets/dash-of-color.obj", "assets/bricks.png");
+	mesh = new Mesh("assets/rip.obj", "assets/bricks.png");
+	for (int i = 0; i < NUM_MESHES; i++)
 		bvhInstance[i] = BVHInstance( mesh->bvh, i );
-	tlas = TLAS( bvhInstance, 16 );
+	tlas = TLAS( bvhInstance, NUM_MESHES );
 	// create a floating point accumulator for the screen
 	accumulator = new float3[SCRWIDTH * SCRHEIGHT];
 	// load HDR sky
@@ -42,26 +55,28 @@ void WhittedApp::AnimateScene()
 {
 	// animate the scene
 	static float a[16] = { 0 }, h[16] = { 5, 4, 3, 2, 1, 5, 4, 3 }, s[16] = { 0 };
-	for (int i = 0, x = 0; x < 4; x++) for (int y = 0; y < 4; y++, i++)
+	for (int i = 0, x = 0; x < std::sqrt(NUM_MESHES); x++) for (int y = 0; y < std::sqrt(NUM_MESHES); y++, i++)
 	{
 		mat4 R, T = mat4::Translate( (x - 1.5f) * 2.5f, 0, (y - 1.5f) * 2.5f );
-		if ((x + y) & 1) R = mat4::RotateY( a[i] );
-		else R = mat4::Translate( 0, h[i / 2], 0 );
-		if ((a[i] += (((i * 13) & 7) + 2) * 0.005f) > 2 * PI) a[i] -= 2 * PI;
-		if ((s[i] -= 0.01f, h[i] += s[i]) < 0) s[i] = 0.2f;
+		if (SHOULD_MOVE)
+		{
+			if ((x + y) & 1) R = mat4::RotateY(a[i]);
+			else R = mat4::Translate(0, h[i / 2], 0);
+			if ((a[i] += (((i * 13) & 7) + 2) * 0.005f) > 2 * PI) a[i] -= 2 * PI;
+			if ((s[i] -= 0.01f, h[i] += s[i]) < 0) s[i] = 0.2f;
+		}
 		bvhInstance[i].SetTransform( T * R * mat4::Scale( 1.5f ) );
 	}
 	// update the TLAS
 	tlas.BuildQuick();
 }
 
-float3 WhittedApp::Trace( Ray& ray, int rayDepth )
+float3 WhittedApp::Trace( Ray& ray, RayCounter* counter, int rayDepth )
 {
-	RayCounter* counter = new RayCounter(ray);
 	tlas.Intersect( ray, counter );
 	Intersection i = ray.hit;
 	if (i.t == 1e30f)
-	{
+	{	
 		// sample sky
 		uint u = (uint)(skyWidth * atan2f( ray.D.z, ray.D.x ) * INV2PI - 0.5f);
 		uint v = (uint)(skyHeight * acosf( ray.D.y ) * INVPI - 0.5f);
@@ -84,15 +99,16 @@ float3 WhittedApp::Trace( Ray& ray, int rayDepth )
 	float3 I = ray.O + i.t * ray.D;
 	// shading
 	bool mirror = (instIdx * 17) & 1;
-	if (mirror)
+	if (mirror && HALF_MIRRORED)
 	{	
 		// calculate the specular reflection in the intersection point
+		counter->incrementBounces();
 		Ray secondary;
 		secondary.D = ray.D - 2 * N * dot( N, ray.D );
 		secondary.O = I + secondary.D * 0.001f;
 		secondary.hit.t = 1e30f;
 		if (rayDepth >= 10) return float3( 0 );
-		return Trace( secondary, rayDepth + 1 );
+		return Trace( secondary, counter, rayDepth + 1 );
 	}
 	else
 	{
@@ -112,14 +128,14 @@ void WhittedApp::Tick( float deltaTime )
 	// update the TLAS
 	AnimateScene();
 	// render the scene: multithreaded tiles
-	static float angle = 0; angle += 0.01f;
+	static float angle = 0;// angle += 0.01f;
 	mat4 M1 = mat4::RotateY( angle ), M2 = M1 * mat4::RotateX( -0.65f );
 	// setup screen plane in world space
 	float aspectRatio = (float)SCRWIDTH / SCRHEIGHT;
 	p0 = TransformPosition( float3( -aspectRatio, 1, 1.5f ), M2 );
 	p1 = TransformPosition( float3( aspectRatio, 1, 1.5f ), M2 );
 	p2 = TransformPosition( float3( -aspectRatio, -1, 1.5f ), M2 );
-	float3 camPos = TransformPosition( float3( 0, -2, -8.5f ), M1 );
+	camPos = TransformPosition( camPos, M1 );
 #pragma omp parallel for schedule(dynamic)
 	for (int tile = 0; tile < (SCRWIDTH * SCRHEIGHT / 64); tile++)
 	{
@@ -127,6 +143,19 @@ void WhittedApp::Tick( float deltaTime )
 		int x = tile % (SCRWIDTH / 8), y = tile / (SCRWIDTH / 8);
 		Ray ray;
 		ray.O = camPos;
+		RayCounter* counter = new RayCounter(ray);
+
+		// Critical section to update counters safely
+#pragma omp critical
+		{
+			if (counterIdx < 524288)
+			{
+				counters[counterIdx] = counter;
+				counterIdx++;
+			}
+
+		}
+
 		for (int v = 0; v < 8; v++) for (int u = 0; u < 8; u++)
 		{
 			// setup a primary ray
@@ -136,7 +165,7 @@ void WhittedApp::Tick( float deltaTime )
 			ray.D = normalize( pixelPos - ray.O );
 			ray.hit.t = 1e30f; // 1e30f denotes 'no hit'
 			uint pixelAddress = x * 8 + u + (y * 8 + v) * SCRWIDTH;
-			accumulator[pixelAddress] = Trace( ray );
+			accumulator[pixelAddress] = Trace( ray , counter );
 		}
 	}
 	// convert the floating point accumulator into pixels
@@ -146,6 +175,92 @@ void WhittedApp::Tick( float deltaTime )
 		int g = min( 255, (int)(255 * accumulator[i].y) );
 		int b = min( 255, (int)(255 * accumulator[i].z) );
 		screen->pixels[i] = (r << 16) + (g << 8) + b;
+	}
+
+	// Periodically print information about counters when certain conditions are met
+	if (timer.elapsed() >= 60) {  // After 10 seconds
+		float minTriangleTests = 999999;
+		float maxTriangleTests = -1;
+
+		float minBoxTests = 999999;
+		float maxBoxTests = -1;
+
+		float maxBounces = -1;
+
+		float averageTraversals;
+		float minTraversals = 999999;
+		float maxTraversals = -1;
+
+		float totalTriangleTests = 0;
+		float totalBoxTests = 0;
+		float totalBounces = 0;
+		float totalTraversals = 0;
+
+		uint length = sizeof(counters) / sizeof(counters[0]);
+		for (int i = 0; i < length; i++)
+		{
+			//std::cout << "triangleTests: " << counters[i]->triangleTests << std::endl;
+			//std::cout << "boxTests: " << counters[i]->boxTests << std::endl;
+			// Triangle tests
+			if (counters[i]->triangleTests < minTriangleTests)
+			{
+				minTriangleTests = counters[i]->triangleTests;
+			}
+			if (counters[i]->triangleTests > maxTriangleTests)
+			{
+				maxTriangleTests = counters[i]->triangleTests;
+			}
+			// Box tests
+			if (counters[i]->boxTests < minBoxTests)
+			{
+				minBoxTests = counters[i]->boxTests;
+			}
+			if (counters[i]->boxTests > maxBoxTests)
+			{
+				maxBoxTests = counters[i]->boxTests;
+			}
+			// Bounces
+			if (counters[i]->bounces > maxBounces)
+			{
+				maxBounces = counters[i]->bounces;
+			}
+			// Traversals
+			if (counters[i]->traversals < minTraversals)
+			{
+				minTraversals = counters[i]->traversals;
+			}
+			if (counters[i]->traversals > maxTraversals)
+			{
+				maxTraversals = counters[i]->traversals;
+			}
+			totalTriangleTests = totalTriangleTests + counters[i]->triangleTests;
+			totalBoxTests = totalBoxTests + counters[i]->boxTests;
+			totalBounces = totalBounces + counters[i]->bounces;
+			totalTraversals = totalTraversals + counters[i]->traversals;
+
+		}
+		std::cout << length << " rays fired." << std::endl;
+
+		std::cout << "TotalTriangleTests: " << totalTriangleTests << std::endl;
+		std::cout << "MinTriangleTests: " << minTriangleTests << std::endl;
+		std::cout << "MaxTriangleTests: " << maxTriangleTests << std::endl;
+		std::cout << "AverageTriangleTests " << totalTriangleTests / length << std::endl;
+
+		std::cout << "TotalBoxTests: " << totalBoxTests << std::endl;
+		std::cout << "MinBoxTests: " << minBoxTests << std::endl;
+		std::cout << "MaxBoxTests: " << maxBoxTests << std::endl;
+		std::cout << "AverageBoxTests " << totalBoxTests / length << std::endl;
+
+		std::cout << "TotalBounces: " << totalBounces << std::endl;
+		std::cout << "MaxBounces: " << maxBounces << std::endl;
+		std::cout << "AverageBounces " << totalBounces / length << std::endl;
+
+		std::cout << "TotalTraversals: " << totalTraversals << std::endl;
+		std::cout << "MinTraversals: " << minTraversals << std::endl;
+		std::cout << "MaxTraversals: " << maxTraversals << std::endl;
+		std::cout << "AverageTraversals: " << totalTraversals / length << std::endl;
+
+		timer.reset();
 	}
 }
 
