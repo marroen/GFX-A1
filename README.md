@@ -15,4 +15,4 @@
 08.12
 - [x] create two more scenes
 - [x] identify all ray types in codebase
-- [ ] track all ray types
+- [x] track all ray types
