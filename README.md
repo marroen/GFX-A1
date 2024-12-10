@@ -1,3 +1,11 @@
+## Build
+In order to run the project, you should run on a Windows PC with a CPU not too ancient.
+Beyond that, just open the '_bvhdemo' solution in Visual Studio, select 'whitted' as the startup project and run it.
+
+You may further recreate the experiments of the report by adjusting arguments in 'whitted.h' and 'whitted.cpp'.
+In 'whitted.cpp', the relevant arguments are in 'void WhittedApp::Init()'.
+Using invalid arguments may cause crashes, and using wrong combination of camera position and meshes may cause you to not be able to see the meshes.
+
 ## TODOs
 
 05.12
@@ -18,5 +26,5 @@
 - [x] track all ray types
 
 09.12
-- [ ] do tests per scene
-- [ ] write report
+- [x] do tests per scene
+- [x] write report

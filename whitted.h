@@ -1,8 +1,8 @@
 #pragma once
 
-#define NUM_MESHES 4
-#define SHOULD_MOVE true
-#define HALF_MIRRORED false
+#define NUM_MESHES 9 // 4 for Dragons, 9 for Rips, 16 for Teapots
+#define SHOULD_MOVE false
+#define HALF_MIRRORED true
 
 namespace Tmpl8
 {

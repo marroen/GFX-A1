@@ -29,17 +29,18 @@ void WhittedApp::Init()
 	Timer timer;
 	timer.reset();
 
-	float3 camPos1 = float3(0, -2, -8.5f);
-	float3 camPos2 = float3(0, 100, -150.0f);
-	float3 camPos3 = float3(0, 15, -30.0f);
+	float3 camPosTeapots = float3(0, -2, -8.5f);
+	float3 camPosDragons = float3(0, -15, -150.0f);
+	float3 camPosRips = float3(0, -6, -30.0f);
 
-	camPos = camPos1;
+	// SELECT RELEVANT CAMERA POSITION
+	camPos = camPosRips;
 
+	// SELECT RELEVANT MESH FILE
 	//mesh = new Mesh( "assets/teapot.obj", "assets/bricks.png" );
 	//mesh = new Mesh( "assets/dragon.obj", "assets/bricks.png" );
-	//mesh = new Mesh("assets/avant-garde.obj", "assets/bricks.png");
-	//mesh = new Mesh("assets/dash-of-color.obj", "assets/bricks.png");
 	mesh = new Mesh("assets/rip.obj", "assets/bricks.png");
+
 	for (int i = 0; i < NUM_MESHES; i++)
 		bvhInstance[i] = BVHInstance( mesh->bvh, i );
 	tlas = TLAS( bvhInstance, NUM_MESHES );

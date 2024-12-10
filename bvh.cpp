@@ -206,7 +206,7 @@ void BVH::Refit()
 		node.aabbMin = fminf( leftChild.aabbMin, rightChild.aabbMin );
 		node.aabbMax = fmaxf( leftChild.aabbMax, rightChild.aabbMax );
 	}
-	printf( "BVH refitted in %.2fms\n", t.elapsed() * 1000 );
+	printf( "BVH itted in %.2fms\n", t.elapsed() * 1000 );
 }
 
 void BVH::Build()
